@@ -1,0 +1,95 @@
+<?php 
+session_start();
+$mail = isset($_POST["courrier"])? $_POST["courrier"] : "";
+$mdp = isset($_POST["motdepasse"])? $_POST["motdepasse"] : "";
+$erreur = "";
+$spe=$_GET["spe"];
+$e=0;
+$d="";
+
+// garder la session du client connecte 
+if (isset($_SESSION['mID'])) {
+    $e=$_SESSION['mID'];
+    $mail=$_SESSION['Mail'];
+    $mdp=$_SESSION['MotdePasse'];
+} 
+
+if ($mail == "") {
+    $erreur .= "Le champ courrier est vide. <br>";
+}
+if ($mdp == "") {
+    $erreur .= "Le champ mdp est vide. <br>";
+}
+if ($erreur != "") {
+    echo "Erreur: <br>" . $erreur;
+    header("Location:clientLogin.php?spe=$spe"); // en cas d erreur 
+}
+else
+{
+    $database = "omnes";
+    //identifier votre serveur (localhost), utlisateur (root), mot de passe ("")
+    $db_handle = mysqli_connect('localhost', 'root', '');
+    $db_found = mysqli_select_db($db_handle, $database);
+    $res=mysqli_query($db_handle, "SELECT cID,Prenom FROM coach WHERE Specialite='$_GET[spe]'");
+    while ($data = mysqli_fetch_assoc($res)) {
+        $d=$data['cID'];
+    }
+    // pour que le client soit connecte
+    if (isset($_POST["client"])) {
+        if ($db_found) {
+        $result =mysqli_query($db_handle, "SELECT * FROM client WHERE Mail='$_POST[courrier]' AND MotdePasse='$_POST[motdepasse]'");
+        if (mysqli_num_rows($result)) {
+        while ($data = mysqli_fetch_assoc($result)) {
+        $_SESSION['mID']=$data['mID'];
+        $e=$_SESSION['mID'];
+        $_SESSION['Mail']=$data['Mail'];
+        $_SESSION['MotdePasse']=$data['MotdePasse'];
+        }
+        }
+        else
+        {
+            header("Location:clientLogin.php?spe=$spe");
+        }
+        }
+        else{
+            echo "<br>Database not found";
+        }
+        //fermer la connexion
+        mysqli_close($db_handle);
+    }  
+}
+?>
+
+<!-- Choix du Client -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Projet </title>
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+ 
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script> 
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <script src="js/scripts.js"></script>
+</head>
+<body>
+<div class="container my-5 py-5">
+        <h2 class="text-white text-center lead">Cher client, veuillez choisir parmi vos options</h2>
+    
+            <div class="col my-4 py-4 text-center">
+                <?php echo "<a  style='font-size: 20px; padding: 10px 20px; border-radius: 5px; color: white;' href='rdv.php?mID=$e&spe=$spe'>Prendre RDV</a>"; ?>
+                <?php echo "<a style='font-size: 20px; padding: 10px 20px; border-radius: 5px; color: white;' href='communiquer2.php?cID=$d&spe=$spe'>Message</a>"; ?>
+                <a  style='font-size: 20px; padding: 10px 20px; border-radius: 5px; color: white;' href="deconnexion.php">Deconnexion</a>
+            </div>
+    </div>
+</div>
+</body>
+</html>
